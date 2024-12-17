@@ -1,1 +1,59 @@
-# jenkinssbmtech1
+CVE-2024-22243 & CVE-2024-22262: Spring Web UriComponentsBuilder Validation Issues
+Problem
+The vulnerabilities occur in UriComponentsBuilder where:
+
+CVE-2024-22243: Externally provided URLs (e.g., query parameters) are improperly validated, potentially leading to Open Redirect attacks or misusing host validation.
+CVE-2024-22262: Similar to CVE-2024-22243 but occurs with a different type of input, still leading to improper host validation.
+These issues can allow attackers to bypass validation mechanisms, enabling Open Redirect or facilitating SSRF (Server-Side Request Forgery) under certain conditions.
+
+Sonatype CVSS: 8.3
+CVSS Vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:N
+
+Solution
+Short-Term Compensating Controls:
+Input Validation:
+
+Implement strict validation for externally provided URLs to ensure only whitelisted domains and schemes (e.g., https, http) are allowed.
+Use regex or domain checks to enforce proper host formats.
+Example Validation:
+
+java
+Copy code
+String url = inputUrl;
+if (!url.matches("^(https?://)([a-zA-Z0-9\\-\\.]+)(:\\d+)?(/.*)?$")) {
+    throw new IllegalArgumentException("Invalid URL input");
+}
+Custom Patch:
+
+Modify UriComponentsBuilder.fromUriString to include strict checks ensuring compliance with RFC 3986.
+Output Encoding:
+
+Ensure output URLs are fully encoded to mitigate injection attacks.
+Proxy and Firewall Configuration:
+
+Configure firewalls or reverse proxies to restrict requests to trusted domains and IP addresses only.
+Open Redirect Prevention:
+
+Validate redirect URLs to ensure they belong to trusted domains before allowing any redirection.
+Example Check:
+
+java
+Copy code
+String redirectUrl = inputRedirect;
+if (!redirectUrl.startsWith("https://trusted-domain.com")) {
+    throw new IllegalArgumentException("Invalid redirect URL");
+}
+Logging and Monitoring:
+
+Enable logging for suspicious or malformed URLs for early detection of exploitation attempts.
+Use tools like SIEM to monitor HTTP requests for anomalies.
+Long-Term Fix:
+Upgrade to the patched Spring Web version (when available) to fully resolve the vulnerabilities.
+Follow Spring Framework's Security Advisory for updates.
+References
+Spring Framework Security Advisory
+CVE-2024-22243 Details - NVD
+CVE-2024-22262 Details - NVD
+OWASP: Server-Side Request Forgery (SSRF)
+OWASP: Open Redirects
+RFC 3986: Uniform Resource Identifier (URI) Syntax (https://datatracker.ietf.org/doc/html/rfc3986)
